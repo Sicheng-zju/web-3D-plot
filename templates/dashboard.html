@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row h-100 g-3">
+    <!-- Left Sidebar: Upload & Create Folder -->
+    <div class="col-md-4 h-100 d-flex flex-column overflow-hidden">
+        <div class="scrollable-y pe-2 pb-5"> <!-- pb-5 for menu button space -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-transparent fw-bold">
+                    {{ _('upload_file') }}
+                    <br>
+                    <small class="text-muted fw-normal">
+                        {{ _('current_path') }}: {% if current_folder %}/{{ current_folder.name }}{% else %}/ ({{ _('root_folder') }}){% endif %}
+                    </small>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                        <div class="mb-3">
+                            <label for="file" class="form-label small">{{ _('select_file') }}</label>
+                            <input class="form-control form-control-sm" type="file" id="file" name="file" accept=".stp,.step,.igs,.iges,.brep,.geo,.msh,.stl,.wrl,.vrml,.obj,.ply,.unv,.vtk,.med,.inp,.bdf,.nas,.key,.k,.su2" required>
+                            <div class="form-text small">
+                                {{ _('supported_formats') }}: .stp, .igs, .stl, .inp, .key, .msh, .geo, {{ _('etc') }}
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="part_name" placeholder="{{ _('part_name') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="part_number" placeholder="{{ _('part_number') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="material" placeholder="{{ _('material') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="mass" placeholder="{{ _('mass') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="surface_finish" placeholder="{{ _('surface_finish') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="supplier" placeholder="{{ _('supplier') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="unit_price" placeholder="{{ _('unit_price') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" name="material_code" placeholder="{{ _('material_code') }}" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-sm">{{ _('upload') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-transparent fw-bold">
+                    {{ _('create_folder') }}
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('create_folder') }}" method="post">
+                        <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder else '' }}">
+                        <div class="mb-3">
+                            <label for="folder_name" class="form-label small">{{ _('folder_name') }}</label>
+                            <input type="text" class="form-control form-control-sm" id="folder_name" name="folder_name" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-secondary btn-sm">{{ _('create') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Content: File List -->
+    <div class="col-md-8 h-100 d-flex flex-column overflow-hidden">
+        {% if current_folder %}
+            <!-- Inside a Folder View -->
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+                <h4 class="mb-0">
+                    <a href="{{ url_for('dashboard', folder_id=current_folder.parent_id) if current_folder.parent_id else url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+                        &larr; {{ _('back') }}
+                    </a>
+                    {{ _('folders') }}: {{ current_folder.name }}
+                </h4>
+            </div>
+
+            <div class="card card-full-height shadow-sm">
+                <div class="card-body p-0">
+                    <div class="scrollable-y p-3">
+                        <div class="list-group">
+                            <!-- Subfolders -->
+                            {% for folder in subfolders %}
+                            <div class="list-group-item list-group-item-light p-2">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <a href="{{ url_for('dashboard', folder_id=folder.id) }}" class="text-decoration-none text-dark flex-grow-1 ps-2">
+                                        <h5 class="mb-0">📁 {{ folder.name }}</h5>
+                                    </a>
+                                    {% if folder.user_id == current_user.id %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#shareFolderModal" 
+                                            data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
+                                        {{ _('share') }}
+                                    </button>
+                                    <form action="{{ url_for('delete_folder', folder_id=folder.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('confirm_delete_folder') }}');">
+                                        <button type="submit" class="btn btn-sm btn-danger ms-2">{{ _('delete') }}</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <!-- Files -->
+                            {% for file in my_files %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h5 class="mb-1">📄 {{ file.filename }}</h5>
+                                    <small>{{ file.upload_date.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-sm btn-success">{{ _('view') }}</a>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#shareModal" 
+                                            data-file-id="{{ file.id }}" data-file-name="{{ file.filename }}">
+                                        {{ _('share') }}
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#moveModal" 
+                                            data-file-id="{{ file.id }}" data-file-name="{{ file.filename }}">
+                                        {{ _('move') }}
+                                    </button>
+                                    
+                                    <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('confirm_delete_file') }}');">
+                                        <button type="submit" class="btn btn-sm btn-danger ms-2">{{ _('delete') }}</button>
+                                    </form>
+                                </div>
+                                {% if file.shared_with %}
+                                <div class="mt-2">
+                                    <small class="text-muted">{{ _('share_with') }}: 
+                                        {% for user in file.shared_with %}
+                                            {{ user.username }}{% if not loop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            {% if not my_files and not subfolders %}
+                            <div class="list-group-item text-center text-muted py-5">{{ _('no_files') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Root View: Split Layout -->
+            <div class="scrollable-y pe-2">
+                <!-- My Files Section -->
+                <h4 class="mb-3">{{ _('my_files') }}</h4>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <!-- My Folders -->
+                            {% for folder in subfolders %}
+                            <div class="list-group-item list-group-item-light p-2">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <a href="{{ url_for('dashboard', folder_id=folder.id) }}" class="text-decoration-none text-dark flex-grow-1 ps-2">
+                                        <h5 class="mb-0">📁 {{ folder.name }}</h5>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#shareFolderModal" 
+                                            data-folder-id="{{ folder.id }}" data-folder-name="{{ folder.name }}">
+                                        {{ _('share') }}
+                                    </button>
+                                    <form action="{{ url_for('delete_folder', folder_id=folder.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('confirm_delete_folder') }}');">
+                                        <button type="submit" class="btn btn-sm btn-danger ms-2">{{ _('delete') }}</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <!-- My Files -->
+                            {% for file in my_files %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h5 class="mb-1">📄 {{ file.filename }}</h5>
+                                    <small>{{ file.upload_date.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-sm btn-success">{{ _('view') }}</a>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#shareModal" 
+                                            data-file-id="{{ file.id }}" data-file-name="{{ file.filename }}">
+                                        {{ _('share') }}
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" 
+                                            data-bs-toggle="modal" data-bs-target="#moveModal" 
+                                            data-file-id="{{ file.id }}" data-file-name="{{ file.filename }}">
+                                        {{ _('move') }}
+                                    </button>
+                                    
+                                    <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('confirm_delete_file') }}');">
+                                        <button type="submit" class="btn btn-sm btn-danger ms-2">{{ _('delete') }}</button>
+                                    </form>
+                                </div>
+                                {% if file.shared_with %}
+                                <div class="mt-2">
+                                    <small class="text-muted">{{ _('share_with') }}: 
+                                        {% for user in file.shared_with %}
+                                            {{ user.username }}{% if not loop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+
+                            {% if not subfolders and not my_files %}
+                            <div class="list-group-item text-center text-muted py-3">{{ _('no_files') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shared With Me Section -->
+                <h4 class="mb-3">{{ _('shared_with_me') }}</h4>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <!-- Shared Folders -->
+                            {% for folder in shared_folders %}
+                            <a href="{{ url_for('dashboard', folder_id=folder.id) }}" class="list-group-item list-group-item-action list-group-item-warning">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h5 class="mb-1">📁 {{ folder.name }} ({{ _('shared_by') }} {{ folder.owner.username }})</h5>
+                                </div>
+                            </a>
+                            {% endfor %}
+
+                            <!-- Shared Files -->
+                            {% for file in shared_files %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ file.filename }}</h5>
+                                    <small>{{ _('owner') }}: {{ file.owner.username }}</small>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-sm btn-success">{{ _('view') }}</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            {% if not shared_folders and not shared_files %}
+                            <div class="list-group-item text-center text-muted py-3">{{ _('no_shared_files') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('share') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shareForm" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('type') }}</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="share_type" id="sharePrivate" value="private" checked>
+                            <label class="form-check-label" for="sharePrivate">
+                                {{ _('private') }}
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="share_type" id="sharePublic" value="public">
+                            <label class="form-check-label" for="sharePublic">
+                                {{ _('public') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="privateShareSection">
+                        <div class="mb-3">
+                            <label for="userSearchInput" class="form-label">{{ _('search_users') }}</label>
+                            <input type="text" class="form-control" id="userSearchInput" placeholder="{{ _('search_users') }}">
+                            <div id="searchResults" class="list-group mt-2"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('selected_users') }}:</label>
+                            <div id="selectedUsersList" class="d-flex flex-wrap gap-2">
+                                <!-- Selected users will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">{{ _('save_changes') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+<!-- Move Modal -->
+<div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">{{ _('move_file') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="moveForm" method="POST">
+                    <div class="mb-3">
+                        <label for="targetFolder" class="form-label">{{ _('select_destination') }}</label>
+                        <select class="form-select" id="targetFolder" name="target_folder_id">
+                            <option value="root">/ ({{ _('root') }})</option>
+                            {% for folder in all_user_folders %}
+                            <option value="{{ folder.id }}">{{ folder.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">{{ _('move') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Folder Modal -->
+<div class="modal fade" id="shareFolderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">{{ _('share_folder') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shareFolderForm" method="POST">
+                    <div class="mb-3">
+                        <label for="folderUserSearchInput" class="form-label">{{ _('search_users') }}</label>
+                        <input type="text" class="form-control" id="folderUserSearchInput" placeholder="{{ _('search_users') }}">
+                        <div id="folderSearchResults" class="list-group mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('selected_users') }}:</label>
+                        <div id="folderSelectedUsersList" class="d-flex flex-wrap gap-2">
+                            <!-- Selected users will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">{{ _('save_changes') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareFolderModal = document.getElementById('shareFolderModal');
+    const moveModal = document.getElementById('moveModal');
+    const searchInput = document.getElementById('folderUserSearchInput');
+    const searchResults = document.getElementById('folderSearchResults');
+    const selectedUsersList = document.getElementById('folderSelectedUsersList');
+    const shareForm = document.getElementById('shareFolderForm');
+    const moveForm = document.getElementById('moveForm');
+    
+    let selectedUsers = new Set();
+
+    // Handle Move Modal Open
+    moveModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const fileId = button.getAttribute('data-file-id');
+        const fileName = button.getAttribute('data-file-name');
+        
+        const modalTitle = moveModal.querySelector('.modal-title');
+        modalTitle.textContent = '{{ _("move_file") }}: ' + fileName;
+        
+        // Update form action
+        moveForm.action = '/move_file/' + fileId;
+    });
+
+    // Handle Modal Open
+    shareFolderModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const folderId = button.getAttribute('data-folder-id');
+        const folderName = button.getAttribute('data-folder-name');
+        
+        const modalTitle = shareFolderModal.querySelector('.modal-title');
+        modalTitle.textContent = '{{ _("share_folder") }}: ' + folderName;
+        
+        // Update form action
+        shareForm.action = '/share_folder/' + folderId;
+        
+        // Reset state
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        selectedUsers.clear();
+        updateSelectedUsersDisplay();
+    });
+
+    // Handle Search
+    let debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+        
+        if (query.length < 1) {
+            searchResults.innerHTML = '';
+            return;
+        }
+        
+        debounceTimer = setTimeout(() => {
+            fetch(`/api/search_users?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(users => {
+                    searchResults.innerHTML = '';
+                    users.forEach(user => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = user.username;
+                        item.onclick = () => addUser(user.username);
+                        searchResults.appendChild(item);
+                    });
+                });
+        }, 300);
+    });
+
+    function addUser(username) {
+        if (!selectedUsers.has(username)) {
+            selectedUsers.add(username);
+            updateSelectedUsersDisplay();
+        }
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+    }
+
+    function removeUser(username) {
+        selectedUsers.delete(username);
+        updateSelectedUsersDisplay();
+    }
+
+    function updateSelectedUsersDisplay() {
+        selectedUsersList.innerHTML = '';
+        selectedUsers.forEach(username => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary d-flex align-items-center p-2';
+            badge.innerHTML = `
+                ${username}
+                <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove"></button>
+                <input type="hidden" name="usernames[]" value="${username}">
+            `;
+            badge.querySelector('.btn-close').onclick = () => removeUser(username);
+            selectedUsersList.appendChild(badge);
+        });
+    }
+});
+</script>
+{% endblock %}

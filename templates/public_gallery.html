@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">{{ _('gallery_title') }}</h2>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for file in files %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ file.filename }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">{{ _('shared_by') }}: {{ file.owner.username }}</small><br>
+                            <small class="text-muted">{{ _('date') }}: {{ file.upload_date.strftime('%Y-%m-%d') }}</small>
+                        </p>
+                        <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-primary">{{ _('view') }}</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">{{ _('no_files') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Distribution / Packaging
+dist/
+build/
+*.egg-info/
+
+# Database
+instance/
+*.sqlite3
+*.db
+
+# Environment Variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Application Data
+uploads/*
+!uploads/.gitkeep

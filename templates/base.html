@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('3d_manager') }}</title>
+    <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/responsive.css') }}" rel="stylesheet">
+</head>
+<body data-theme="{{ current_theme }}">
+    
+    <div class="container-fluid h-100 p-3">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 2000;">
+                {% for message in messages %}
+                    <div class="alert alert-info shadow-sm alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="dropup position-fixed bottom-0 start-0 p-3" style="z-index: 1050;">
+        <button class="btn btn-primary dropdown-toggle shadow" type="button" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if current_user.is_authenticated %}
+                👤 {{ current_user.username }}
+            {% else %}
+                ☰ {{ _('menu') }}
+            {% endif %}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="userMenuBtn">
+            {% if current_user.is_authenticated %}
+                <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">{{ _('dashboard') }}</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('profile') }}">{{ _('edit_profile') }}</a></li>
+            {% else %}
+                <li><a class="dropdown-item" href="{{ url_for('login') }}">{{ _('login') }}</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('register') }}">{{ _('register') }}</a></li>
+            {% endif %}
+            
+            <li><a class="dropdown-item" href="{{ url_for('public_gallery') }}">{{ _('public_gallery') }}</a></li>
+            
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">{{ _('language') }}</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('set_language', lang='en') }}">{{ _('english') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('set_language', lang='zh') }}">{{ _('chinese') }}</a></li>
+            
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#formatsModal">{{ _('supported_formats') }}</a></li>
+
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">{{ _('theme') }}</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('set_theme', theme='light') }}">{{ _('light') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('set_theme', theme='dark') }}">{{ _('dark') }}</a></li>
+            
+            {% if current_user.is_authenticated %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">{{ _('logout') }}</a></li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Supported Formats Modal -->
+    <div class="modal fade" id="formatsModal" tabindex="-1" aria-labelledby="formatsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="formatsModalLabel">{{ _('supported_formats') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="fw-bold">{{ _('geometry_formats') }}</h6>
+                    <p class="small text-muted">{{ _('format_desc_geometry') }}</p>
+                    <ul>
+                        <li>STEP (.stp, .step)</li>
+                        <li>IGES (.igs, .iges)</li>
+                        <li>BRep (.brep)</li>
+                        <li>Gmsh Geo (.geo)</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-3">{{ _('mesh_formats') }}</h6>
+                    <p class="small text-muted">{{ _('format_desc_mesh') }}</p>
+                    <ul>
+                        <li>Gmsh Mesh (.msh)</li>
+                        <li>STL (.stl)</li>
+                        <li>VRML (.wrl, .vrml)</li>
+                        <li>OBJ (.obj)</li>
+                        <li>PLY (.ply)</li>
+                        <li>UNV (.unv)</li>
+                        <li>VTK (.vtk)</li>
+                        <li>MED (.med)</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-3">{{ _('solver_formats') }}</h6>
+                    <p class="small text-muted">{{ _('format_desc_solver') }}</p>
+                    <ul>
+                        <li>Abaqus (.inp)</li>
+                        <li>Nastran (.bdf, .nas)</li>
+                        <li>LS-DYNA (.key, .k)</li>
+                        <li>SU2 (.su2)</li>
+                    </ul>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

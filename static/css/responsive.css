@@ -1,0 +1,69 @@
+/* Desktop-First Full Screen Layout */
+html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent body scroll, handle inside containers */
+    margin: 0;
+    padding: 0;
+}
+
+.container-fluid {
+    height: 100%;
+    padding: 1rem;
+}
+
+/* Scrollable areas */
+.scrollable-y {
+    overflow-y: auto;
+    height: 100%;
+    /* Hide scrollbar for cleaner look if desired, or style it */
+    scrollbar-width: thin;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(150, 150, 150, 0.5);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.8);
+}
+
+/* Viewer Layout Adjustments */
+.viewer-container-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer-sidebar {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Ensure cards fill height when needed */
+.card-full-height {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-full-height .card-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* Firefox fix for flex items */
+}
+
+/* Remove mobile-specific adjustments that conflict with desktop-only */
+/* We keep the media queries just in case, but the main layout is now fixed to full height */
+
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}

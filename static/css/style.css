@@ -1,0 +1,287 @@
+/* Theme Variables */
+:root {
+    /* Light Theme (Default) */
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --text-color: #2c3e50;
+    
+    /* Glass Effect - Light */
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --glass-blur: blur(12px);
+    
+    --navbar-bg: rgba(255, 255, 255, 0.75);
+    --card-bg: rgba(255, 255, 255, 0.65);
+    
+    --input-bg: rgba(255, 255, 255, 0.5);
+    --input-text: #2c3e50;
+    --input-border: rgba(255, 255, 255, 0.6);
+    
+    --link-color: #34495e;
+    --link-hover: #000000;
+    
+    --btn-primary-bg: rgba(13, 110, 253, 0.9);
+    --btn-primary-text: #ffffff;
+    --btn-secondary-bg: rgba(108, 117, 125, 0.9);
+    
+    --dropdown-bg: rgba(255, 255, 255, 0.85);
+    --dropdown-item-color: #2c3e50;
+    --dropdown-item-hover-bg: rgba(0, 0, 0, 0.05);
+    
+    --table-color: #2c3e50;
+    --table-hover-bg: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+    /* Dark Theme */
+    --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    --text-color: #ecf0f1;
+    
+    /* Glass Effect - Dark */
+    --glass-bg: rgba(16, 26, 38, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glass-blur: blur(16px);
+    
+    --navbar-bg: rgba(16, 26, 38, 0.75);
+    --card-bg: rgba(16, 26, 38, 0.6);
+    
+    --input-bg: rgba(0, 0, 0, 0.25);
+    --input-text: #ecf0f1;
+    --input-border: rgba(255, 255, 255, 0.1);
+    
+    --link-color: #bdc3c7;
+    --link-hover: #ffffff;
+    
+    --btn-primary-bg: rgba(255, 255, 255, 0.9);
+    --btn-primary-text: #1a1a1a;
+    --btn-secondary-bg: rgba(255, 255, 255, 0.15);
+    
+    --dropdown-bg: rgba(20, 30, 40, 0.9);
+    --dropdown-item-color: #ecf0f1;
+    --dropdown-item-hover-bg: rgba(255, 255, 255, 0.1);
+    
+    --table-color: #ecf0f1;
+    --table-hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    transition: color 0.3s ease;
+}
+
+/* Glassmorphism Base Class */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 12px;
+}
+
+/* Navbar */
+.navbar {
+    background: var(--navbar-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.navbar-light .navbar-brand {
+    color: var(--text-color) !important;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: var(--link-color) !important;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--link-hover) !important;
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    color: var(--text-color);
+    box-shadow: var(--glass-shadow);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* List Groups */
+.list-group-item {
+    background: transparent;
+    border-color: var(--glass-border);
+    color: var(--text-color);
+}
+
+.list-group-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Forms */
+.form-control {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    backdrop-filter: blur(5px);
+}
+
+.form-control:focus {
+    background: var(--input-bg);
+    border-color: var(--text-color);
+    color: var(--input-text);
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--btn-primary-bg);
+    border-color: transparent;
+    color: var(--btn-primary-text);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    background-color: var(--btn-primary-bg);
+    border-color: transparent;
+    color: var(--btn-primary-text);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: var(--btn-secondary-bg);
+    border-color: var(--glass-border);
+    color: var(--text-color);
+    backdrop-filter: blur(4px);
+}
+
+.btn-secondary:hover {
+    background-color: var(--glass-bg);
+    border-color: var(--glass-border);
+    color: var(--text-color);
+}
+
+/* Modals */
+.modal-content {
+    background: var(--dropdown-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    color: var(--text-color);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--glass-border);
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+[data-theme="light"] .btn-close {
+    filter: none;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    background: var(--dropdown-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 10px;
+}
+
+.dropdown-item {
+    color: var(--dropdown-item-color);
+}
+
+.dropdown-item:hover {
+    background: var(--dropdown-item-hover-bg);
+    color: var(--text-color);
+}
+
+.dropdown-divider {
+    border-top-color: var(--glass-border);
+}
+
+/* Breadcrumbs */
+.breadcrumb-item a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: var(--text-color);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--link-color);
+}
+
+/* Tables */
+.table {
+    color: var(--table-color);
+}
+.table-hover tbody tr:hover {
+    color: var(--text-color);
+    background-color: var(--table-hover-bg);
+}
+
+/* Alerts */
+.alert-info {
+    background-color: var(--glass-bg);
+    border-color: var(--glass-border);
+    color: var(--text-color);
+    backdrop-filter: blur(5px);
+}
+
+/* User Menu Button (Bottom Left) */
+.dropup .btn-primary {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-color);
+}
+.dropup .btn-primary:hover {
+    background: var(--glass-border);
+}
+
+/* Glass Modal */
+.glass-modal {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    color: var(--text-color);
+}
+
+[data-theme='dark'] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+

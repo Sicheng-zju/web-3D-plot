@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row h-100 g-3">
+    <!-- Viewer Area -->
+    <div class="col-md-9 h-100 position-relative p-0" style="border-radius: 12px; overflow: hidden;">
+        <div id="viewer-container" style="width: 100%; height: 100%; background-color: #f0f0f0;">
+            <div id="loading-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 10;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ _('loading') }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating Toolbar for Views -->
+        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-3 glass-panel p-2 d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('iso')" title="{{ _('view_iso') }}">ISO</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('front')" title="{{ _('view_front') }}">F</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('back')" title="{{ _('view_back') }}">B</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('left')" title="{{ _('view_left') }}">L</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('right')" title="{{ _('view_right') }}">R</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('top')" title="{{ _('view_top') }}">T</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewerAPI.setView('bottom')" title="{{ _('view_bottom') }}">Bt</button>
+        </div>
+    </div>
+
+    <!-- Controls Sidebar -->
+    <div class="col-md-3 h-100">
+        <div class="glass-panel p-3 h-100 viewer-sidebar d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+                <h5 class="mb-0 text-truncate" title="{{ file.filename }}">{{ file.filename }}</h5>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">{{ _('back') }}</a>
+            </div>
+            
+            <hr class="flex-shrink-0">
+            
+            <!-- Scrollable Content -->
+            <div class="overflow-auto flex-grow-1 pe-2">
+                <!-- Properties -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0">{{ _('properties') }}</h6>
+                    {% if file.user_id == current_user.id %}
+                    <button class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#propertiesModal">
+                        <i class="bi bi-pencil-square"></i> {{ _('edit') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="small mb-3 viewer-properties-container">
+                    <table class="table table-sm table-borderless text-muted mb-0">
+                        {% if file.part_name %}<tr><td class="ps-0">{{ _('part_name') }}:</td><td class="text-end pe-0">{{ file.part_name }}</td></tr>{% endif %}
+                        {% if file.part_number %}<tr><td class="ps-0">{{ _('part_number') }}:</td><td class="text-end pe-0">{{ file.part_number }}</td></tr>{% endif %}
+                        {% if file.material %}<tr><td class="ps-0">{{ _('material') }}:</td><td class="text-end pe-0">{{ file.material }}</td></tr>{% endif %}
+                        {% if file.mass %}<tr><td class="ps-0">{{ _('mass') }}:</td><td class="text-end pe-0">{{ file.mass }}</td></tr>{% endif %}
+                        {% if file.surface_finish %}<tr><td class="ps-0">{{ _('surface_finish') }}:</td><td class="text-end pe-0">{{ file.surface_finish }}</td></tr>{% endif %}
+                        {% if file.supplier %}<tr><td class="ps-0">{{ _('supplier') }}:</td><td class="text-end pe-0">{{ file.supplier }}</td></tr>{% endif %}
+                        {% if file.unit_price %}<tr><td class="ps-0">{{ _('unit_price') }}:</td><td class="text-end pe-0">{{ file.unit_price }}</td></tr>{% endif %}
+                        {% if file.material_code %}<tr><td class="ps-0">{{ _('material_code') }}:</td><td class="text-end pe-0">{{ file.material_code }}</td></tr>{% endif %}
+                        
+                        {% for attr in file.attributes %}
+                        <tr><td class="ps-0">{{ attr.key }}:</td><td class="text-end pe-0">{{ attr.value }}</td></tr>
+                        {% endfor %}
+                    </table>
+                    {% if not file.part_name and not file.part_number and not file.attributes and not file.material %}
+                    <div class="text-center text-muted fst-italic py-2">{{ _('no_properties') }}</div>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <!-- Rendering Settings -->
+                <h6 class="fw-bold mb-3">{{ _('rendering_settings') }}</h6>
+                
+                <div class="mb-3">
+                    <label for="colorPicker" class="form-label small">{{ _('color') }}</label>
+                    <input type="color" class="form-control form-control-color w-100" id="colorPicker" value="#0055ff" title="{{ _('choose_color') }}">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="opacityRange" class="form-label small">{{ _('opacity') }}: <span id="opacityValue">100%</span></label>
+                    <input type="range" class="form-range" id="opacityRange" min="0" max="1" step="0.1" value="1">
+                </div>
+                
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="wireframeSwitch">
+                    <label class="form-check-label small" for="wireframeSwitch">{{ _('wireframe_mode') }}</label>
+                </div>
+
+                <hr>
+
+                <!-- Actions -->
+                <h6 class="fw-bold mb-3">{{ _('actions') }}</h6>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" id="btnScreenshot">
+                        <i class="bi bi-camera"></i> {{ _('take_screenshot') }}
+                    </button>
+                    
+                    {% if file.user_id == current_user.id %}
+                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#updateModal">
+                        <i class="bi bi-cloud-upload"></i> {{ _('update_model') }}
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-primary">
+                        <i class="bi bi-download"></i> {{ _('download_original') }}
+                    </a>
+                </div>
+                
+                {% if file.versions %}
+                <hr>
+                <h6 class="fw-bold mb-3">{{ _('version_history') }}</h6>
+                <div class="list-group list-group-flush small">
+                    {% for version in file.versions|sort(attribute='version_number', reverse=True) %}
+                    <div class="list-group-item bg-transparent px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>v{{ version.version_number }}</strong>
+                                <span class="text-muted ms-2">{{ version.upload_date.strftime('%Y-%m-%d') }}</span>
+                            </div>
+                            <a href="{{ url_for('download_version', version_id=version.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('download') }} v{{ version.version_number }}">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="mt-4 small text-muted">
+                    {{ _('viewer_instructions') }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Three.js and Loaders -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "{{ url_for('static', filename='vendor/three/build/three.module.js') }}",
+            "three/addons/": "{{ url_for('static', filename='vendor/three/examples/jsm') }}/"
+        }
+    }
+</script>
+
+<script type="module">
+    import { initViewer } from "{{ url_for('static', filename='js/viewer.js') }}";
+    
+    const fileUrl = "{{ view_url }}";
+    const fileExt = "{{ view_ext }}";
+    
+    // Initialize viewer and expose API globally
+    window.viewerAPI = initViewer('viewer-container', fileUrl, fileExt);
+    
+    // Bind Controls
+    document.getElementById('colorPicker').addEventListener('input', (e) => {
+        window.viewerAPI.setColor(e.target.value);
+    });
+    
+    document.getElementById('opacityRange').addEventListener('input', (e) => {
+        const val = e.target.value;
+        document.getElementById('opacityValue').textContent = Math.round(val * 100) + '%';
+        window.viewerAPI.setOpacity(val);
+    });
+    
+    document.getElementById('wireframeSwitch').addEventListener('change', (e) => {
+        window.viewerAPI.setWireframe(e.target.checked);
+    });
+    
+    document.getElementById('btnScreenshot').addEventListener('click', () => {
+        const dataUrl = window.viewerAPI.getScreenshot();
+        const link = document.createElement('a');
+        link.download = 'screenshot_' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '-') + '.png';
+        link.href = dataUrl;
+        link.click();
+    });
+</script>
+
+<!-- Properties Modal -->
+<div class="modal fade" id="propertiesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">{{ _('edit_properties') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('update_file_properties', file_id=file.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('part_name') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="part_name" value="{{ file.part_name or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('part_number') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="part_number" value="{{ file.part_number or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('material') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="material" value="{{ file.material or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('mass') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="mass" value="{{ file.mass or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('surface_finish') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="surface_finish" value="{{ file.surface_finish or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('supplier') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="supplier" value="{{ file.supplier or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('unit_price') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="unit_price" value="{{ file.unit_price or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ _('material_code') }}</label>
+                            <input type="text" class="form-control form-control-sm" name="material_code" value="{{ file.material_code or '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6 class="small fw-bold">{{ _('custom_attributes') }}</h6>
+                    <div id="custom-attributes">
+                        {% for attr in file.attributes %}
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control form-control-sm" name="custom_keys[]" placeholder="{{ _('key') }}" value="{{ attr.key }}">
+                            <input type="text" class="form-control form-control-sm" name="custom_values[]" placeholder="{{ _('value') }}" value="{{ attr.value }}">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.remove()">X</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addCustomAttribute()">+ {{ _('add_attribute') }}</button>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('close') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('save_changes') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addCustomAttribute() {
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control form-control-sm" name="custom_keys[]" placeholder="{{ _('key') }}">
+        <input type="text" class="form-control form-control-sm" name="custom_values[]" placeholder="{{ _('value') }}">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.remove()">X</button>
+    `;
+    document.getElementById('custom-attributes').appendChild(div);
+}
+</script>
+
+<!-- Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">{{ _('update_model_version') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('upload_version', file_id=file.id) }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <p class="small text-muted">{{ _('update_version_desc') }}</p>
+                    <div class="mb-3">
+                        <label for="updateFile" class="form-label">{{ _('select_new_file') }}</label>
+                        <input class="form-control" type="file" id="updateFile" name="file" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+                    <button type="submit" class="btn btn-success">{{ _('upload_new_version') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
