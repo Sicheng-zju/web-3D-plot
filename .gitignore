@@ -10,7 +10,7 @@ env/
 
 # Distribution / Packaging
 dist/
-build/
+/build/
 *.egg-info/
 
 # Database
